@@ -1,4 +1,7 @@
 # main_app.py (or your main script)
+
+#THIS FILE IS NOT LONGER USED. kEPT FOR TESTING PURPOSES
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
