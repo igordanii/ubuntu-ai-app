@@ -1,4 +1,3 @@
-```markdown
 # Ubuntu AI Productivity Suite 🚀
 
 **(Project Status: Alpha / Work in Progress 🚧 - May 2025)**
