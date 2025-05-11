@@ -184,63 +184,72 @@ To configure your API key securely for this application:
 
 ---
 
-Contributing to Ubuntu AI Productivity Suite
+## Contributing to Ubuntu AI Productivity Suite
 We welcome contributions to the Ubuntu AI Productivity Suite! Whether you're reporting a bug, suggesting an enhancement, or writing code, your help is appreciated. Here's how you can contribute:
 
 1. Reporting Bugs
 
-Check Existing Issues: Before submitting a new bug report, please check the GitHub Issues to see if the bug has already been reported.
-Provide Details: If you're submitting a new bug, please include as much detail as possible:
-A clear and descriptive title.
-Steps to reproduce the bug.
-What you expected to happen.
-What actually happened (including any error messages and full console output).
-Your Ubuntu version, desktop environment (e.g., GNOME, XFCE), and whether you're using X11 or Wayland.
-The version of the application you are using (if applicable, e.g., a Git commit hash).
+* Check Existing Issues: Before submitting a new bug report, please check the GitHub Issues to see if the bug has already been reported.
+* Provide Details: If you're submitting a new bug, please include as much detail as possible:
+* A clear and descriptive title.
+* Steps to reproduce the bug.
+* What you expected to happen.
+* What actually happened (including any error messages and full console output).
+* Your Ubuntu version, desktop environment (e.g., GNOME, XFCE), and whether you're using X11 or Wayland.
+* The version of the application you are using (if applicable, e.g., a Git commit hash).
+
 2. Suggesting Enhancements or New Features
 
-Check Existing Issues/Discussions: Your idea might already be under discussion. Check the GitHub Issues (look for "enhancement" or "feature request" labels) or GitHub Discussions (if you enable this feature).
-Be Clear and Specific:
-Provide a clear and descriptive title for your suggestion.
-Explain the enhancement or feature in detail. What would it do? Why is it useful?
-Provide examples or mockups if possible.
+* Check Existing Issues/Discussions: Your idea might already be under discussion. Check the GitHub Issues (look for "enhancement" or "feature request" labels) or GitHub Discussions (if you enable this feature).
+* Be Clear and Specific:
+* Provide a clear and descriptive title for your suggestion.
+* Explain the enhancement or feature in detail. What would it do? Why is it useful?
+* Provide examples or mockups if possible.
+
 3. Code Contributions (Pull Requests)
 
 We are happy to accept code contributions! Please follow these steps:
 
 Fork the Repository: Create your own fork of the project on GitHub.
 Clone Your Fork: Clone your fork to your local machine:
-Bash
 
+```Bash
 git clone https://github.com/<your-github-username>/<repository-name>.git
 cd <repository-name>
+```
+
 Set Up Development Environment: Follow the Installation instructions in this README to set up your development environment, including system dependencies and the Python virtual environment.
 Create a New Branch: Create a new branch for your feature or bug fix. Use a descriptive name (e.g., feat/add-language-persistence or fix/ocr-accuracy-issue).
-Bash
 
+```Bash
 git checkout -b name-of-your-new-branch
+```
+
 Make Your Changes:
-Write clean, well-commented code.
-Follow existing coding style and conventions (e.g., PEP 8 for Python).
-Ensure your changes do not break existing functionality.
-(If you add tests later): Add tests for any new features or bug fixes.
-Commit Your Changes: Write clear and concise commit messages. A good format is:
+* Write clean, well-commented code.
+* Follow existing coding style and conventions (e.g., PEP 8 for Python).
+* Ensure your changes do not break existing functionality.
+* (If you add tests later): Add tests for any new features or bug fixes.
+* Commit Your Changes: Write clear and concise commit messages. A good format is:
 Type: Brief description of changes
 
 More detailed explanation if necessary.
 Fixes #<issue-number> (if applicable)
 Example: Feat: Add language selection dialog for translation
 Push to Your Fork:
-Code snippet
 
+```Code snippet
 git push origin name-of-your-new-branch
+```
+
 Open a Pull Request (PR):
-Go to the original repository on GitHub.
-You should see a prompt to create a Pull Request from your new branch.
-Provide a clear title and description for your PR.
-Explain the changes you've made and why.
-Link to any relevant issues (e.g., "Closes #123").
-Be prepared for feedback and code review. You may be asked to make changes.
+* Go to the original repository on GitHub.
+* You should see a prompt to create a Pull Request from your new branch.
+* Provide a clear title and description for your PR.
+* Explain the changes you've made and why.
+* Link to any relevant issues (e.g., "Closes #123").
+* Be prepared for feedback and code review. You may be asked to make changes.
+
 4. Coding Style (Python)
 
 Please follow PEP 8 -- Style Guide for Python Code.
