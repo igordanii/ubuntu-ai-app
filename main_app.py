@@ -3,8 +3,8 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
-from capture_utils import capture_screen # From Phase 1
-from display_window import show_screenshot # From Phase 2
+from capture_utils import capture_screen 
+from display_window import show_screenshot
 
 def run_capture_and_display(full_screen=True):
     print(f"Starting capture (full_screen={full_screen})...")

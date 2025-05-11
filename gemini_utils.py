@@ -13,7 +13,7 @@ def get_gemini_response_text(prompt):
     response = model.generate_content(prompt)
     return response.text
 
-def translate_text_with_gemini(text_to_translate, target_language="pt-BR"): # Target Portuguese (Brazil)
+def translate_text_with_gemini(text_to_translate, target_language): # Target Portuguese (Brazil)
     if not text_to_translate:
         return "No text provided for translation."
 

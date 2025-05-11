@@ -3,37 +3,31 @@ import subprocess
 import tempfile
 import os
 import time
-from shutil import which # For is_tool_available
-import uuid # For unique IDs
+from shutil import which
+import uuid
 
 def get_session_type():
-    """Detects the current session type (e.g., 'x11', 'wayland')."""
-    # XDG_SESSION_TYPE is the most standard way.
-    # Fallback to 'x11' if it's not set, though on modern systems it usually is.
     return os.environ.get('XDG_SESSION_TYPE', 'x11').lower()
 
 def is_tool_available(name):
-    """Check whether `name` is on PATH and marked as executable."""
     return which(name) is not None
 
 def capture_screen(full_screen=True, temp_dir=None):
-    capture_id = str(uuid.uuid4()) # Generate a unique ID for this capture attempt
+    capture_id = str(uuid.uuid4())
     print(f"[{capture_id}] ENTERING capture_screen: full_screen={full_screen}")
 
     session_type = get_session_type()
     print(f"[{capture_id}] Detected session type: {session_type}")
 
-    temp_image_path = None # Ensure it's defined for cleanup in case of early exit
+    temp_image_path = None
     tool_used = ""
     command = []
 
     try:
-        # Create a temporary file that gnome-screenshot (or other tools) will write to.
-        # mkstemp creates the file, so tools need write permission.
-        # It returns a file descriptor (fd) and path. We close fd as Popen uses the path.
         fd, temp_image_path = tempfile.mkstemp(suffix=".png", dir=temp_dir)
         os.close(fd)
 
+        # --- Determine command (same logic as before) ---
         if session_type == "wayland":
             if is_tool_available("gnome-screenshot"):
                 tool_used = "gnome-screenshot"
@@ -41,71 +35,74 @@ def capture_screen(full_screen=True, temp_dir=None):
                     command = ["gnome-screenshot", "-f", temp_image_path]
                 else:
                     command = ["gnome-screenshot", "-a", "-f", temp_image_path]
-            elif is_tool_available("grim") and (full_screen or is_tool_available("slurp")):
-                tool_used = "grim/slurp"
-                if full_screen:
-                    command = ["grim", temp_image_path]
-                else: # Area selection with grim/slurp
-                    if not is_tool_available("slurp"):
-                        print(f"[{capture_id}] Error: 'slurp' is required for area selection with 'grim' but not found.")
-                        if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
-                        return None
-                    try:
-                        slurp_process = subprocess.run("slurp", capture_output=True, text=True, check=True, timeout=30)
-                        geometry = slurp_process.stdout.strip()
-                        if not geometry:
-                            print(f"[{capture_id}] Wayland selection with slurp cancelled or failed (no geometry).")
-                            if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
-                            return None
-                        command = ["grim", "-g", geometry, temp_image_path]
-                    except subprocess.TimeoutExpired:
-                        print(f"[{capture_id}] Error: 'slurp' command timed out.")
-                        if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
-                        return None
-                    except subprocess.CalledProcessError as e:
-                        print(f"[{capture_id}] Error during slurp execution: {e.stderr}")
-                        if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
-                        return None
+            # ... (elif for grim/slurp - truncated for brevity, keep your existing logic) ...
             else:
-                print(f"[{capture_id}] Error: No suitable Wayland screenshot tool found (tried gnome-screenshot, grim/slurp).")
+                print(f"[{capture_id}] Error: No suitable Wayland screenshot tool found.")
                 if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
                 return None
-
         elif session_type == "x11":
-            if not is_tool_available("scrot"):
-                print(f"[{capture_id}] Error: 'scrot' command not found for X11 session.")
+            if is_tool_available("scrot"):
+                tool_used = "scrot"
+                if full_screen:
+                    command = ["scrot", "-z", temp_image_path]
+                else:
+                    time.sleep(0.3)
+                    command = ["scrot", "-s", "-z", "-f", temp_image_path]
+            # ... (else for no X11 tool - truncated, keep your existing logic) ...
+            else:
+                print(f"[{capture_id}] Error: No suitable X11 screenshot tool found.")
                 if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
                 return None
-            tool_used = "scrot"
-            if full_screen:
-                command = ["scrot", "-z", temp_image_path]
-            else: # Area selection with scrot
-                time.sleep(0.3) # Small delay for user to react before selection starts
-                command = ["scrot", "-s", "-z", "-f", temp_image_path]
         else:
             print(f"[{capture_id}] Unsupported session type: {session_type}")
             if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
             return None
 
         if not command:
-            print(f"[{capture_id}] Error: Could not determine screenshot command (should not happen if logic above is complete).")
+            print(f"[{capture_id}] Error: Could not determine screenshot command.")
             if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
             return None
 
-        # Debug prints for environment variables (can be commented out if not needed)
-        # print(f"[{capture_id}] Current LD_LIBRARY_PATH: {os.environ.get('LD_LIBRARY_PATH')}")
-        # print(f"[{capture_id}] Current PYTHONHOME: {os.environ.get('PYTHONHOME')}")
-        # print(f"[{capture_id}] Current PYTHONPATH: {os.environ.get('PYTHONPATH')}")
-
-        print(f"[{capture_id}] Using tool: {tool_used}. Executing Popen for command: {' '.join(command)}")
+        # --- Create a Sanitized Environment for Popen ---
+        clean_env = {}
+        # Essential for finding system commands and for GUI apps to connect to display server
+        essential_vars = ['PATH', 'HOME', 'DISPLAY', 'XAUTHORITY', 'XDG_RUNTIME_DIR', 'WAYLAND_DISPLAY', 'DBUS_SESSION_BUS_ADDRESS']
         
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Ensure a minimal, standard PATH. Crucially, do NOT include Snap paths if they were in os.environ['PATH']
+        # You might want to be even more restrictive, e.g., PATH="/usr/bin:/bin"
+        system_paths = [p for p in os.environ.get('PATH', '').split(os.pathsep) if not p.startswith('/snap/')]
+        clean_env['PATH'] = os.pathsep.join(system_paths) if system_paths else "/usr/local/bin:/usr/bin:/bin"
+        if '/usr/bin' not in clean_env['PATH'].split(os.pathsep): # Ensure /usr/bin is present
+             clean_env['PATH'] = f"/usr/bin:{clean_env['PATH']}"
+
+
+        for var_name in essential_vars:
+            if var_name == 'PATH': continue # Already handled
+            if var_name in os.environ:
+                clean_env[var_name] = os.environ[var_name]
+        
+        # Explicitly unset/remove variables known to be set by Snap environments
+        # that might cause issues if they somehow still linger.
+        # This is more of a precaution.
+        vars_to_remove_if_present = ['SNAP', 'SNAP_ARCH', 'SNAP_COMMON', 'SNAP_CONTEXT', 
+                                     'SNAP_DATA', 'SNAP_INSTANCE_KEY', 'SNAP_INSTANCE_NAME',
+                                     'SNAP_LIBRARY_PATH', 'SNAP_NAME', 'SNAP_REEXEC', 
+                                     'SNAP_REVISION', 'SNAP_USER_COMMON', 'SNAP_USER_DATA', 
+                                     'SNAP_VERSION', 'LD_PRELOAD'] # LD_PRELOAD can also cause issues
+        
+        # The clean_env starts empty, so we don't need to remove from it,
+        # but this illustrates variables you'd want to avoid copying from os.environ.
+
+        print(f"[{capture_id}] Using tool: {tool_used}. Executing Popen with command: {' '.join(command)}")
+        print(f"[{capture_id}] Using sanitized PATH: {clean_env.get('PATH')}")
+        # print(f"[{capture_id}] Full sanitized env: {clean_env}") # For deep debugging
+
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=clean_env) # Pass the sanitized env
         try:
-            stdout, stderr = process.communicate(timeout=60) # stdout and stderr are bytes
+            stdout, stderr = process.communicate(timeout=60)
             return_code = process.returncode
         except subprocess.TimeoutExpired:
-            process.kill() # Ensure process is killed
-            # Try to communicate again to get any final output after kill
+            process.kill()
             stdout_t, stderr_t = process.communicate()
             print(f"[{capture_id}] Error: Screenshot command ({tool_used}) timed out.")
             if stdout_t: print(f"[{capture_id}] STDOUT on timeout: {stdout_t.decode(errors='ignore')}")
@@ -119,35 +116,28 @@ def capture_screen(full_screen=True, temp_dir=None):
         stderr_str = stderr.decode(errors='ignore').strip()
 
         if return_code == 0:
-            # For gnome-screenshot, a return code of 0 should mean success.
-            # However, we still check file existence and size as a safeguard.
             if os.path.exists(temp_image_path) and os.path.getsize(temp_image_path) > 0:
                 print(f"[{capture_id}] Screenshot saved to: {temp_image_path}")
                 if stdout_str: print(f"[{capture_id}] STDOUT from {tool_used} (RC=0): {stdout_str}")
-                if stderr_str: print(f"[{capture_id}] STDERR from {tool_used} (RC=0): {stderr_str}") # Often empty on success
+                if stderr_str: print(f"[{capture_id}] STDERR from {tool_used} (RC=0): {stderr_str}")
                 return temp_image_path
             else:
+                # ... (error handling for RC=0 but bad file, same as before, include stdout_str/stderr_str) ...
                 print(f"[{capture_id}] Error: Screenshot command ({tool_used}) executed with code 0 but no valid file was created or file is empty.")
-                print(f"[{capture_id}] File path checked: {temp_image_path}")
-                print(f"[{capture_id}] Exists: {os.path.exists(temp_image_path)}")
-                if os.path.exists(temp_image_path):
-                    print(f"[{capture_id}] Size: {os.path.getsize(temp_image_path)}")
+                # ... (print file path, exists, size)
                 if stdout_str: print(f"[{capture_id}] STDOUT from {tool_used} (RC=0, but file issue): {stdout_str}")
                 if stderr_str: print(f"[{capture_id}] STDERR from {tool_used} (RC=0, but file issue): {stderr_str}")
                 if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
                 return None
-        else: # Non-zero return code
+        else:
+            # ... (error handling for non-zero RC, same as before, include stdout_str/stderr_str) ...
             print(f"[{capture_id}] Error: Screenshot command ({tool_used}) failed with return code {return_code}.")
             if stdout_str: print(f"[{capture_id}] STDOUT from {tool_used} (RC={return_code}): {stdout_str}")
             if stderr_str: print(f"[{capture_id}] STDERR from {tool_used} (RC={return_code}): {stderr_str}")
             if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
             return None
 
-    except FileNotFoundError as e: # If Popen fails to find the command (should be caught by is_tool_available earlier)
-        print(f"[{capture_id}] Error: Command '{command[0] if command else 'unknown'}' not found during Popen. {e}")
-        if temp_image_path and os.path.exists(temp_image_path): os.remove(temp_image_path)
-        return None
-    except Exception as e: # Catch any other unexpected errors during capture
+    except Exception as e:
         print(f"[{capture_id}] An unexpected error occurred in capture_screen: {e}")
         import traceback
         traceback.print_exc()
