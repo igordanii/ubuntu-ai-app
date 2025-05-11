@@ -184,12 +184,6 @@ To configure your API key securely for this application:
 
 ---
 
-## Contributing
-
-This project is currently under active development. If you're interested in contributing in the future, please check back for guidelines on reporting issues, suggesting features, or submitting pull requests.
-
-Here are some common sections and points you can include in your contribution guidelines:
-
 Contributing to Ubuntu AI Productivity Suite
 We welcome contributions to the Ubuntu AI Productivity Suite! Whether you're reporting a bug, suggesting an enhancement, or writing code, your help is appreciated. Here's how you can contribute:
 
@@ -203,7 +197,6 @@ What you expected to happen.
 What actually happened (including any error messages and full console output).
 Your Ubuntu version, desktop environment (e.g., GNOME, XFCE), and whether you're using X11 or Wayland.
 The version of the application you are using (if applicable, e.g., a Git commit hash).
-
 2. Suggesting Enhancements or New Features
 
 Check Existing Issues/Discussions: Your idea might already be under discussion. Check the GitHub Issues (look for "enhancement" or "feature request" labels) or GitHub Discussions (if you enable this feature).
@@ -211,26 +204,21 @@ Be Clear and Specific:
 Provide a clear and descriptive title for your suggestion.
 Explain the enhancement or feature in detail. What would it do? Why is it useful?
 Provide examples or mockups if possible.
-
 3. Code Contributions (Pull Requests)
 
 We are happy to accept code contributions! Please follow these steps:
 
 Fork the Repository: Create your own fork of the project on GitHub.
 Clone Your Fork: Clone your fork to your local machine:
-
 Bash
 
-```git clone https://github.com/<your-github-username>/<repository-name>.git
-cd <repository-name>```
-
+git clone https://github.com/<your-github-username>/<repository-name>.git
+cd <repository-name>
 Set Up Development Environment: Follow the Installation instructions in this README to set up your development environment, including system dependencies and the Python virtual environment.
 Create a New Branch: Create a new branch for your feature or bug fix. Use a descriptive name (e.g., feat/add-language-persistence or fix/ocr-accuracy-issue).
-
 Bash
 
-```git checkout -b name-of-your-new-branch```
-
+git checkout -b name-of-your-new-branch
 Make Your Changes:
 Write clean, well-commented code.
 Follow existing coding style and conventions (e.g., PEP 8 for Python).
@@ -243,11 +231,9 @@ More detailed explanation if necessary.
 Fixes #<issue-number> (if applicable)
 Example: Feat: Add language selection dialog for translation
 Push to Your Fork:
-
 Code snippet
 
-```git push origin name-of-your-new-branch ```
-
+git push origin name-of-your-new-branch
 Open a Pull Request (PR):
 Go to the original repository on GitHub.
 You should see a prompt to create a Pull Request from your new branch.
@@ -255,13 +241,11 @@ Provide a clear title and description for your PR.
 Explain the changes you've made and why.
 Link to any relevant issues (e.g., "Closes #123").
 Be prepared for feedback and code review. You may be asked to make changes.
-
 4. Coding Style (Python)
 
 Please follow PEP 8 -- Style Guide for Python Code.
 Use clear variable and function names.
 Add comments to explain complex logic.
-
 
 5. Questions?
 
