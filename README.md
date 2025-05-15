@@ -9,20 +9,23 @@ The suite aims to provide two main components:
 **1. Smart Screenshot Enhancer:**
 Transform your static screenshots into interactive content.
 
-* 🖼️ **Flexible Capture:** Full screen or select a specific area using native system tools.
+* 🖼️ **Flexible Capture:** Full screen or select a specific area using native system tools, triggered by a keyboard shortcut. An initial dialog allows choosing the capture mode.
 * ✨ **Instant Overlay UI:** After capture, a sleek, temporary window appears with icon-based actions:
     * 👁️ **Recognize & Extract Text:** Uses Tesseract OCR to pull text directly from the image.
-    * 🌐 **AI-Powered Translation (Image Text):** Translate the extracted text using the Gemini API (e.g., to Brazilian Portuguese or other configured languages).
+    * 🌐 **AI-Powered Translation (Image Text):** Translate the extracted text using the Gemini API, with a language selection dialog.
     * 📋 **Quick Copy (Image Text):** Easily copy the extracted text to your clipboard.
     * 💾 **Save Image:** Save the screenshot to your preferred directory (`~/Pictures/Screenshots/` by default).
+* 🚪 **Clean Exit:** Application closes properly when the screenshot window is dismissed (via Esc or Close button).
 
-**2. System-Wide AI Text Assistant (Planned & In Development):**
-Access AI capabilities anywhere you can select text.
+**2. System-Wide AI Text Assistant (In Development):**
+Access AI capabilities for any text you copy to the clipboard.
 
-* 🔍 **Contextual Text Actions:** Upon selecting text in any application, a discreet UI (to be designed) will offer:
-    * 🌍 **Instant Translation (Selected Text):** Translate selected text to your desired language via Gemini API.
-    * ✍️ **AI Summarization:** Get quick summaries of lengthy selected passages using Gemini API.
-    * 💅 **Format Improvement:** Let AI help reformat or improve the clarity of selected text using Gemini API.
+* 📋 **Clipboard Monitoring:** Actively monitors the system clipboard for new text copied by the user (e.g., via Ctrl+C).
+* ✨ **Floating Action Panel:** When new text is copied, a small, undecorated panel with icon buttons appears near the mouse cursor, offering:
+    * 🌍 **Instant Translation (Selected Text):** Translate copied text to your desired language (selected via dialog) using Gemini API.
+    * ✍️ **AI Summarization:** Get quick summaries of copied passages using Gemini API.
+    * 💅 **Format Improvement:** Let AI help reformat or improve the clarity of copied text using Gemini API.
+* 🖱️ **Contextual & Transient UI:** The floating panel is designed to appear on new text copy and hide when focus is lost, Esc is pressed, or an action is taken.
 
 ---
 
@@ -32,8 +35,8 @@ Access AI capabilities anywhere you can select text.
 * **GUI:** GTK+ 3 (via PyGObject) for a native Ubuntu look and feel.
 * **AI Language Model:** Google Gemini API
 * **OCR Engine:** Tesseract OCR
-* **Clipboard Integration:** Pyperclip
-* **System Interaction:** Native Linux tools (`gnome-screenshot`, `scrot`) and libraries for screenshotting and potentially text selection monitoring.
+* **Clipboard Integration:** Pyperclip (for screenshot part), `wl-paste` (for system-wide text assistant on Wayland).
+* **System Interaction:** Native Linux tools (`gnome-screenshot`, `scrot`, `wl-paste`) and libraries.
 
 ---
 
@@ -61,206 +64,29 @@ sudo apt install -y \
     tesseract-ocr-por \
     gnome-screenshot \
     scrot \
-    xclip
-```
-
-* **`tesseract-ocr-por`**: Included for Portuguese OCR. Add or replace with other language packs as needed (e.g., `tesseract-ocr-spa` for Spanish, `tesseract-ocr-fra` for French). You can search for available Tesseract language packs with `apt search tesseract-ocr-`.
-* **`xclip`**: Used by `pyperclip` for clipboard access on Linux. `xsel` is an alternative if `xclip` is not preferred.
-
-**2. Clone the Repository (Recommended):**
-
-If you are managing this project with Git, clone it:
-
-```bash
-git clone <your-repository-url>
+    xclip \
+    wl-clipboard
+tesseract-ocr-por: Included for Portuguese OCR. Add or replace with other language packs as needed (e.g., tesseract-ocr-spa for Spanish, tesseract-ocr-fra for French). You can search for available Tesseract language packs with apt search tesseract-ocr-.xclip: Used by pyperclip (primarily for the screenshot component's copy action). xsel is an alternative.wl-clipboard: Provides wl-paste, which is used by the system-wide text assistant for clipboard access on Wayland.2. Clone the Repository (Recommended):If you are managing this project with Git, clone it:git clone <your-repository-url>
 cd <repository-name> # e.g., cd ubuntu-ai-suite
-```
-If you don't have a repository yet, simply ensure all project files (`main_app.py`, `capture_utils.py`, `display_window.py`, `ocr_utils.py`, `gemini_utils.py`, etc.) are in the same main project directory.
-
-**3. Set Up Python Virtual Environment:**
-
-Using a Python virtual environment is strongly recommended to manage dependencies.
-
-```bash
-# Ensure you are in the project's root directory
+If you don't have a repository yet, simply ensure all project files (main_app_launcher.py, text_assistant_main.py, capture_utils.py, display_window.py, floating_action_panel.py, ocr_utils.py, gemini_utils.py, common_dialogs.py, text_action_dialogs.py) are in the same main project directory.3. Set Up Python Virtual Environment:Using a Python virtual environment is strongly recommended to manage dependencies.# Ensure you are in the project's root directory
 python3 -m venv --system-site-packages venv
 source venv/bin/activate
-```
-* The `--system-site-packages` flag is crucial for PyGObject (GTK bindings) to correctly interface with the system-installed GTK libraries.
-
-**4. Install Python Dependencies:**
-
-Create a `requirements.txt` file in your project's root directory. This file should list all Python packages your project depends on.
-
-A minimal `requirements.txt` would look something like this:
-```txt
-# For image manipulation in OCR and creating dummy images for testing
+The --system-site-packages flag is crucial for PyGObject (GTK bindings) to correctly interface with the system-installed GTK libraries.4. Install Python Dependencies:Create a requirements.txt file in your project's root directory. This file should list all Python packages your project depends on.A minimal requirements.txt would look something like this:# For image manipulation in OCR and creating dummy images for testing
 Pillow
-
 # Python wrapper for Tesseract OCR
 pytesseract
-
 # Google Gemini API client library
 google-generativeai
-
 # For loading environment variables (like API keys from .env file)
 python-dotenv
-
-# For cross-platform clipboard access
+# For cross-platform clipboard access (used in screenshot module)
 pyperclip
-
-# For monitoring file system events (if you implement screenshot directory monitoring)
-# watchdog
-```
-
-Once `requirements.txt` is created and populated, install the packages:
-```bash
-# Ensure your virtual environment (venv) is active
+Once requirements.txt is created and populated, install the packages:# Ensure your virtual environment (venv) is active
 pip install -r requirements.txt
-```
-*To generate `requirements.txt` from your current working environment (after installing packages manually with pip): `pip freeze > requirements.txt`*
-
----
-
-## Configuration
-
-**Google Gemini API Key:**
-
-This application uses the Google Gemini API. You need to obtain an API key:
-1.  Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
-2.  Create or use an existing API key.
-
-To configure your API key securely for this application:
-
-1.  In the root directory of the project, create a file named `.env`.
-2.  Add your API key to this `.env` file in the following format:
-
-    ```env
-    GOOGLE_API_KEY="YOUR_ACTUAL_GEMINI_API_KEY_HERE"
-    ```
-
-3.  The application uses the `python-dotenv` library (listed in `requirements.txt`) to load this key from the `.env` file.
-4.  **Important:** Add `.env` to your `.gitignore` file to prevent your API key from being accidentally committed to version control.
-
----
-
-## Usage
-
-1.  **Activate the virtual environment** (if not already active):
-    ```bash
-    source venv/bin/activate
-    ```
-2.  **Run the main application script** from the project's root directory:
-    ```bash
-    python3 main_app.py
-    ```
-
-**Screenshot Workflow:**
-* Launch the application. It will typically present an option to take a full-screen or area-selection screenshot.
-* After the screenshot is captured, a temporary preview window will appear.
-* **Save Icon:** Saves the current screenshot to `~/Pictures/Screenshots/` (by default).
-* **Translate Icon:** Extracts text from the screenshot using OCR and then translates it using the Gemini API. The result is shown in a dialog.
-* **Copy Text Icon:** Extracts text from the screenshot using OCR and copies it to the system clipboard.
-* **Close Icon (or pressing the `Esc` key):** Closes the preview window. If the image was a temporary capture, the temporary file is deleted.
-
-**System-Wide Text Assistant (Planned):**
-* (Detailed usage instructions for this feature will be added as it becomes available.)
-
----
-
-## Current Status (as of May 2025)
-
-* **Alpha / Work in Progress 🚧**
-* Core screenshot capture functionality (using `gnome-screenshot` for Wayland/GNOME, `scrot` for X11) is implemented.
-* Temporary screenshot display(Specify your chosen open-source license here. For example: "T window with GTK+3, featuring icon-based buttons, is operational.
-* "Save Image" button functionality is complete.
-* "Copy Text" (OCR + Clipboard) and "Translate Text" (OCR + Gemini API) from screenshots are partially implemented (UI connected, core logic integration in progress).
-* System-wide text selection monitoring and associated AI actions (translate, summarize, format) are in the planning and early design stages.
-* Selection screen to choose between selection and full screen, allowing selection through shortcut.
-* Cleaning memomy and deleting temp files when application is closed.
-
----
-
-## Contributing to Ubuntu AI Productivity Suite
-We welcome contributions to the Ubuntu AI Productivity Suite! Whether you're reporting a bug, suggesting an enhancement, or writing code, your help is appreciated. Here's how you can contribute:
-
-1. Reporting Bugs
-
-* Check Existing Issues: Before submitting a new bug report, please check the GitHub Issues to see if the bug has already been reported.
-* Provide Details: If you're submitting a new bug, please include as much detail as possible:
-* A clear and descriptive title.
-* Steps to reproduce the bug.
-* What you expected to happen.
-* What actually happened (including any error messages and full console output).
-* Your Ubuntu version, desktop environment (e.g., GNOME, XFCE), and whether you're using X11 or Wayland.
-* The version of the application you are using (if applicable, e.g., a Git commit hash).
-
-2. Suggesting Enhancements or New Features
-
-* Check Existing Issues/Discussions: Your idea might already be under discussion. Check the GitHub Issues (look for "enhancement" or "feature request" labels) or GitHub Discussions (if you enable this feature).
-* Be Clear and Specific:
-* Provide a clear and descriptive title for your suggestion.
-* Explain the enhancement or feature in detail. What would it do? Why is it useful?
-* Provide examples or mockups if possible.
-
-3. Code Contributions (Pull Requests)
-
-We are happy to accept code contributions! Please follow these steps:
-
-Fork the Repository: Create your own fork of the project on GitHub.
-Clone Your Fork: Clone your fork to your local machine:
-
-```Bash
-git clone https://github.com/<your-github-username>/<repository-name>.git
+To generate requirements.txt from your current working environment (after installing packages manually with pip): pip freeze > requirements.txtConfigurationGoogle Gemini API Key:This application uses the Google Gemini API. You need to obtain an API key:Go to Google AI Studio.Create or use an existing API key.To configure your API key securely for this application:In the root directory of the project, create a file named .env.Add your API key to this .env file in the following format:GOOGLE_API_KEY="YOUR_ACTUAL_GEMINI_API_KEY_HERE"
+The application uses the python-dotenv library (listed in requirements.txt) to load this key from the .env file.Important: Add .env to your .gitignore file to prevent your API key from being accidentally committed to version control.UsageActivate the virtual environment (if not already active):source venv/bin/activate
+Screenshot Enhancer:Run: python3 main_app_launcher.py (or your main script for screenshots).This should ideally be configured to run via a system-wide keyboard shortcut (see "Known Issues / Challenges" for setting this up).An initial dialog will ask for capture mode (Area/Full Screen).After capture, the preview window with action buttons appears.System-Wide Text Assistant:Run: python3 text_assistant_main.pyThis runs in the background, monitoring clipboard "Copy" events.When you copy text (Ctrl+C) in any application, the floating action panel should appear near your mouse.Click an icon on the panel to perform an action.To stop the assistant, press Ctrl+C in the terminal where it's running.Current Status (as of May 14, 2025)Alpha / Work in Progress 🚧Screenshot Enhancer:Core capture logic (full screen, area selection) via system tools is functional.Initial dialog for capture mode selection (icon buttons, keyboard '1'/'2') implemented.Temporary screenshot display window with GTK+3, featuring icon-based buttons (Save, Translate, Copy, Close) is operational."Save Image," "Copy Text" (OCR + Clipboard), and "Translate Text" (OCR + Language Selection Dialog + Gemini API) functionalities are implemented for screenshots.System-Wide Text Assistant:Background process monitors clipboard "Copy" events using wl-paste (for Wayland).Floating action panel UI (undecorated, icon buttons) appears on new text copy.Actions (Translate with language selection, Summarize, Improve Format) using Gemini API are connected.Result display dialogs are functional.Known Issues / ChallengesFloating Panel Stability (System-Wide Text Assistant):The floating action panel currently exhibits a "flickering" behavior on Wayland: it appears when text is copied but may immediately hide due to focus management complexities with undecorated top-level windows.Reliably keeping the panel visible and interactive without it stealing focus inappropriately, or disappearing too soon, is an ongoing challenge.The panel's position is based on mouse cursor coordinates; if these are reported as (0,0) (which sometimes happens initially on Wayland), a fallback attempts to center it, but precise positioning near selected text needs improvement.Global Keyboard Shortcut for Screenshot Tool:The screenshot part of the application (main_app_launcher.py) needs to be manually configured in Ubuntu's system settings (Settings -> Keyboard -> Keyboard Shortcuts -> Custom Shortcuts) to be launched via a global hotkey. The command would be something like:/full/path/to/your/project/venv/bin/python3 /full/path/to/your/project/main_app_launcher.pyEnsuring the correct working directory and environment for scripts launched this way is important.Wayland PRIMARY Selection:The original goal of reacting to any highlighted text (PRIMARY selection) for the system-wide assistant is very difficult on Wayland due to security restrictions. The current implementation relies on explicit "Copy" actions (CLIPBOARD selection). AT-SPI might be a future avenue for PRIMARY selection but is significantly more complex.wl-paste Timeouts: Occasional timeouts from wl-paste can cause the text assistant to miss a clipboard update or briefly think the clipboard is empty. The current logic tries to use the last known good text in such cases.Contributing to Ubuntu AI Productivity SuiteWe welcome contributions to the Ubuntu AI Productivity Suite! Whether you're reporting a bug, suggesting an enhancement, or writing code, your help is appreciated. Here's how you can contribute:1. Reporting BugsCheck Existing Issues: Before submitting a new bug report, please check the GitHub Issues to see if the bug has already been reported.Provide Details: If you're submitting a new bug, please include as much detail as possible:A clear and descriptive title.Steps to reproduce the bug.What you expected to happen.What actually happened (including any error messages and full console output).Your Ubuntu version, desktop environment (e.g., GNOME, XFCE), and whether you're using X11 or Wayland (echo $XDG_SESSION_TYPE).The version of the application you are using (if applicable, e.g., a Git commit hash or branch name).2. Suggesting Enhancements or New FeaturesCheck Existing Issues/Discussions: Your idea might already be under discussion. Check the GitHub Issues (look for "enhancement" or "feature request" labels) or GitHub Discussions (if you enable this feature).Be Clear and Specific:Provide a clear and descriptive title for your suggestion.Explain the enhancement or feature in detail. What would it do? Why is it useful?Provide examples or mockups if possible.3. Code Contributions (Pull Requests)We are happy to accept code contributions! Please follow these steps:Fork the Repository: Create your own fork of the project on GitHub.Clone Your Fork:git clone [https://github.com/](https://github.com/)<your-github-username>/<repository-name>.git
 cd <repository-name>
-```
-
-Set Up Development Environment: Follow the Installation instructions in this README to set up your development environment, including system dependencies and the Python virtual environment.
-Create a New Branch: Create a new branch for your feature or bug fix. Use a descriptive name (e.g., feat/add-language-persistence or fix/ocr-accuracy-issue).
-
-```Bash
-git checkout -b name-of-your-new-branch
-```
-
-Make Your Changes:
-* Write clean, well-commented code.
-* Follow existing coding style and conventions (e.g., PEP 8 for Python).
-* Ensure your changes do not break existing functionality.
-* (If you add tests later): Add tests for any new features or bug fixes.
-* Commit Your Changes: Write clear and concise commit messages. A good format is:
-Type: Brief description of changes
-
-More detailed explanation if necessary.
-Fixes #<issue-number> (if applicable)
-Example: Feat: Add language selection dialog for translation
-Push to Your Fork:
-
-```Code snippet
-git push origin name-of-your-new-branch
-```
-
-Open a Pull Request (PR):
-* Go to the original repository on GitHub.
-* You should see a prompt to create a Pull Request from your new branch.
-* Provide a clear title and description for your PR.
-* Explain the changes you've made and why.
-* Link to any relevant issues (e.g., "Closes #123").
-* Be prepared for feedback and code review. You may be asked to make changes.
-
-4. Coding Style (Python)
-
-Please follow PEP 8 -- Style Guide for Python Code.
-Use clear variable and function names.
-Add comments to explain complex logic.
-
-5. Questions?
-
-If you have any questions about contributing, feel free to open an issue on GitHub.
-
----
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE.md file for details.
-
-```
+Set Up Development Environment: Follow the Installation instructions.Create a New Branch: Use a descriptive name (e.g., feat/improve-panel-focus or fix/wl-paste-timeout-handling).git checkout -b name-of-your-new-branch
+Make Your Changes:Write clean, well-commented code (PEP 8 for Python).Ensure your changes do not break existing functionality.Update documentation (like this README) if your changes affect usage or setup.Commit Your Changes: Write clear commit messages.Push to Your Fork:git push origin name-of-your-new-branch
+Open a Pull Request (PR):Provide a clear title and description, linking to any relevant issues.Be prepared for feedback and code review.4. Coding Style (Python)Please follow PEP 8 -- Style Guide for Python Code.Use clear variable and function names.Add comments to explain complex logic.5. Questions?If you have any questions about contributing, feel free to open an issue on GitHub.

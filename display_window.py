@@ -8,62 +8,12 @@ import datetime
 
 # Import your utility functions
 from ocr_utils import extract_text_from_image
-from gemini_utils import translate_text_with_gemini # Ensure this can take a target_language argument
+from gemini_utils import translate_text_with_gemini
 import pyperclip
 
-# --- Language Configuration ---
-# Display Name: Language Code (for Gemini API)
-SUPPORTED_LANGUAGES = {
-    "Brazilian Portuguese": "pt-BR",
-    "English": "en",
-    "Spanish": "es",
-    "French": "fr",
-    "German": "de",
-    "Japanese": "ja",
-    "Chinese (Simplified)": "zh-CN",
-    "Italian": "it",
-    "Russian": "ru",
-    "Korean": "ko"
-}
-DEFAULT_TARGET_LANGUAGE_DISPLAY = "Brazilian Portuguese" # The one selected by default
+# Import the shared LanguageSelectionDialog and constants
+from common_dialogs import LanguageSelectionDialog, SUPPORTED_LANGUAGES, DEFAULT_TARGET_LANGUAGE_DISPLAY
 
-class LanguageSelectionDialog(Gtk.Dialog):
-    def __init__(self, parent_window, default_language_display_name):
-        super().__init__(title="Select Target Language", transient_for=parent_window, flags=0)
-        self.add_buttons(
-            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OK, Gtk.ResponseType.OK
-        )
-
-        self.set_default_size(300, 100)
-        self.set_modal(True) # Make it modal to the parent
-
-        self.language_combo = Gtk.ComboBoxText()
-        active_idx = 0
-        idx_count = 0
-        for display_name in SUPPORTED_LANGUAGES.keys():
-            self.language_combo.append_text(display_name)
-            if display_name == default_language_display_name:
-                active_idx = idx_count
-            idx_count += 1
-        
-        self.language_combo.set_active(active_idx)
-
-        box = self.get_content_area() # Gtk.Box
-        box.set_spacing(10)
-        box.set_border_width(10) # Add some padding around the content area
-        
-        label = Gtk.Label(label="Translate to:")
-        label.props.xalign = 0 # Left align
-        box.pack_start(label, False, False, 0)
-        box.pack_start(self.language_combo, True, True, 0)
-        
-        self.show_all()
-
-    def get_selected_language_code(self):
-        active_text = self.language_combo.get_active_text()
-        if active_text:
-            return SUPPORTED_LANGUAGES.get(active_text)
-        return None
 
 class ScreenshotDisplayWindow(Gtk.Window):
     def __init__(self, image_path):
@@ -72,7 +22,8 @@ class ScreenshotDisplayWindow(Gtk.Window):
         self.image_path = image_path
         self.temp_file_to_delete = None
         self.default_save_dir = os.path.expanduser("~/Pictures/Screenshots")
-        self.last_selected_language_display = DEFAULT_TARGET_LANGUAGE_DISPLAY # Store last selection
+        # Use the imported constant for the initial last selected language
+        self.last_selected_language_display = DEFAULT_TARGET_LANGUAGE_DISPLAY
 
         self.set_decorated(False)
         self.set_keep_above(True)
@@ -155,7 +106,7 @@ class ScreenshotDisplayWindow(Gtk.Window):
 
     def on_key_press(self, widget, event):
         if event.keyval == Gdk.KEY_Escape:
-            self.close()
+            self.close() # This will trigger the "destroy" signal
         return False
 
     def set_temp_file_to_delete(self, filepath):
@@ -169,6 +120,8 @@ class ScreenshotDisplayWindow(Gtk.Window):
                 print(f"Temporary file '{self.temp_file_to_delete}' deleted.")
             except OSError as e:
                 print(f"Error deleting temporary file '{self.temp_file_to_delete}': {e}")
+        
+        print("Quitting Gtk.main() loop.")
         Gtk.main_quit()
 
     def on_save_clicked(self, widget):
@@ -194,31 +147,22 @@ class ScreenshotDisplayWindow(Gtk.Window):
             self.show_error_dialog("Translation Error", "Image path is invalid or file does not exist.")
             return
 
-        # 1. Show language selection dialog
         lang_dialog = LanguageSelectionDialog(self, self.last_selected_language_display)
         response = lang_dialog.run()
-        
         selected_lang_code = None
         selected_lang_display_name = None
-
         if response == Gtk.ResponseType.OK:
             selected_lang_code = lang_dialog.get_selected_language_code()
             selected_lang_display_name = lang_dialog.language_combo.get_active_text()
-            if selected_lang_display_name: # Store for next time
+            if selected_lang_display_name:
                 self.last_selected_language_display = selected_lang_display_name
-            print(f"Language selected: {selected_lang_display_name} ({selected_lang_code})")
-        else:
-            print("Language selection cancelled.")
-            lang_dialog.destroy()
-            return # User cancelled
-
-        lang_dialog.destroy() # Important to destroy the dialog
-
+        lang_dialog.destroy()
         if not selected_lang_code:
-            self.show_error_dialog("Translation Error", "No target language was selected.")
+            print("Language selection cancelled or failed.")
+            # Optionally show a message that translation was cancelled
+            # self.show_info_dialog("Translation Cancelled", "No target language was selected.")
             return
 
-        # 2. Extract text using OCR
         extracted_text = extract_text_from_image(self.image_path)
         if not extracted_text:
             error_msg = "Could not extract text from the image, or no text was found."
@@ -227,22 +171,16 @@ class ScreenshotDisplayWindow(Gtk.Window):
             self.show_error_dialog("OCR Problem", error_msg)
             return
 
-        # 3. Translate the extracted text using Gemini
         translated_text = translate_text_with_gemini(extracted_text, target_language=selected_lang_code)
-
-        # 4. Display the translation
         if translated_text:
-            # Check for known error strings from gemini_utils or ocr_utils
             known_errors = ["Gemini API not configured", "Error during translation", "Tesseract not found", "No text provided"]
-            is_error = any(err_msg in translated_text for err_msg in known_errors) and "Error:" in translated_text
-
+            is_error = any(err_msg.lower() in translated_text.lower() for err_msg in known_errors) and "error:" in translated_text.lower()
             if is_error:
                 self.show_error_dialog("Translation Failed", translated_text)
             else:
                 self.show_info_dialog(f"Translation to {selected_lang_display_name}", translated_text)
         else:
             self.show_error_dialog("Translation Failed", "An unknown error occurred, or no translation was returned.")
-
 
     def on_copy_text_clicked(self, widget):
         print("[ACTION] Copy Text button clicked.")
@@ -262,7 +200,7 @@ class ScreenshotDisplayWindow(Gtk.Window):
                 self.show_error_dialog("Clipboard Error", f"An unexpected error occurred: {e}")
         elif extracted_text == "":
             self.show_info_dialog("Copy Text", "No text was found in the image.")
-        else:
+        else: 
             error_msg = "Could not extract text from the image."
             if isinstance(extracted_text, str) and "Error:" in extracted_text:
                 error_msg = extracted_text 
@@ -284,7 +222,14 @@ class ScreenshotDisplayWindow(Gtk.Window):
     def show_error_dialog(self, title, message):
         dialog = Gtk.MessageDialog(transient_for=self, flags=0, message_type=Gtk.MessageType.ERROR,
                                    buttons=Gtk.ButtonsType.OK, text=title)
-        dialog.format_secondary_text(message); dialog.run(); dialog.destroy()
+        dialog.format_secondary_text(message)
+        if dialog.get_message_area():
+            for child_widget in dialog.get_message_area().get_children():
+                 if isinstance(child_widget, Gtk.Label):
+                    child_widget.set_selectable(True); child_widget.set_line_wrap(True)
+                    child_widget.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
+                    child_widget.props.xalign = 0
+        dialog.run(); dialog.destroy()
 
 def show_screenshot(image_path, is_temporary_file=False):
     win = ScreenshotDisplayWindow(image_path)
@@ -293,7 +238,6 @@ def show_screenshot(image_path, is_temporary_file=False):
     win.show_all()
 
 if __name__ == "__main__":
-    # This block is for testing display_window.py directly
     test_image_file = "test_image.png" 
     if not os.path.exists(test_image_file):
         print(f"Test image '{test_image_file}' not found for direct testing.")
