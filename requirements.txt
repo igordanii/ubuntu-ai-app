@@ -23,7 +23,6 @@ distro-info==1.7+build1
 dotenv==0.9.9
 duplicity==2.1.4
 fasteners==0.18
-Flask==3.0.2
 google-ai-generativelanguage==0.6.15
 google-api-core==2.24.2
 google-api-python-client==2.169.0

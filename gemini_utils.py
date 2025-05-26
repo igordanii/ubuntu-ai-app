@@ -1,9 +1,14 @@
 import google.generativeai as genai
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
+
+text = ""
+with open("GOOGLE_API_KEY.env", "r") as key_file:
+    text = key_file.read()
+    set_key(".env", "GOOGLE_API_KEY", text)
 
 load_dotenv()
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.getenv(text)
 genai.configure(api_key=GOOGLE_API_KEY)
 
 SIMULATE_GEMINI = False
