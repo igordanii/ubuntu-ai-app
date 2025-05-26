@@ -197,7 +197,3 @@ python3 main_app_launcher.py
 * **Deprecation Warnings**:
   Some GDK functions used for screen/pointer information (e.g., `Gdk.Screen.get_number`) may show deprecation warnings in the console. These should be updated to their modern equivalents in future versions.
 
-```
-
-Let me know if you'd like this turned into an actual file (`README.md`) or tailored to a specific style (e.g., more minimal, dark theme previews, emojis removed, etc.).
-```
